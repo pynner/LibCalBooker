@@ -39,6 +39,7 @@ class GUI:
         # set up availRooms
         self.availRooms = ['LI 1004', 'LI 1006', 'LI 1007', 'LI 1008', 'LI 1009', 'LI 1010', 'LI 4001', 'LI 4002',
                            'LI 4003', 'LI 4004', 'LI 4005', 'LI 4006', 'LI 4007', 'LI 4008', 'LI 4009', 'LI 4010']
+        self.availTimes = ['8:00am - 8:30am', '8:30am - 9:00am', '9:00am - 9:30am', '9:30am - 10:00am', '10:00am - 10:30am', '10:30am - 11:00am', '11:00am - 11:30am', '11:30am - 12:00pm', '12:00pm - 12:30pm', '12:30pm - 1:00pm', '1:00pm - 1:30pm', '1:30pm - 2:00pm', '2:00pm - 2:30pm', '2:30pm - 3:00pm', '3:00pm - 3:30pm', '3:30pm - 4:00pm', '4:00pm - 4:30pm', '4:30pm - 5:00pm', '5:00pm - 5:30pm', '5:30pm - 6:00pm', '6:00pm - 6:30pm', '6:30pm - 7:00pm', '7:00pm - 7:30pm', '7:30pm - 8:00pm', '8:00pm - 8:30pm', '8:30pm - 9:00pm', '9:00pm - 9:30pm', '9:30pm - 10:00pm']
         # set up chosen room and give default value
         self.chosenRoom = StringVar(self.master)
         self.chosenRoom.set(self.availRooms[0])
@@ -105,8 +106,11 @@ class GUI:
 
     def load_data(self):
         # connect to webdriver PhantomJS for headless browser
+        # FASTER WITH FIREOFX
+        #self.driver = webdriver.Firefox()
         #self.driver = webdriver.Firefox(executable_path='/Library/Python/geckodriver')
         self.driver = webdriver.PhantomJS()
+
         # Move window to side / off screen
         #self.driver.set_window_position(1000, 0)
         self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445")
@@ -138,6 +142,7 @@ class GUI:
         for val in self.availDates:
             menu.add_command(label=val, command=lambda pvalue=val: self.date_click(pvalue))
 
+        self.master.update()
         # Initial load times
         self.date_click()
 
@@ -159,21 +164,26 @@ class GUI:
         # make sure loaded?
         self.driver.save_screenshot('checkPage.png')
 
+        print "Starting to load times"
         # FRIKKEN SLOW
         time1 = time.time()
         self.roomTimeList = []
         form = self.driver.find_element_by_id("roombookingform")
         rooms = form.find_elements_by_tag_name("fieldset")
+        time2 = time.time()
         for room in rooms:
             # go through each room, pulling times to array
             times_out = []
             check_boxes = room.find_elements_by_class_name("checkbox")
+
             for box in check_boxes:
-                times_out.append(box.find_element_by_tag_name("label").text)
+                # output checkbox text
+                # times_out.append(box.find_element_by_tag_name("label").text)
+                times_out.append(self.availTimes.index(box.find_element_by_tag_name("label").text))
             self.roomTimeList.append(times_out)
         print self.roomTimeList
-        time2 = time.time()
-        print 'getting the times function took %0.3f ms' % ((time2 - time1) * 1000.0) #20s avg
+        time3 = time.time()
+        print 'Ginding rooms: %0.3f ms and appending to list took: %0.3f ms' % ((time2 - time1) * 1000.0, (time3 - time2) * 1000.0) #20s avg
         self.master.update()
         self.room_click()
 
@@ -186,7 +196,7 @@ class GUI:
         self.roomIndex = self.availRooms.index(self.chosenRoom.get())
         # for the selected room, get all time slots
         for time in self.roomTimeList[self.roomIndex]:
-            self.timeOptionList.insert(END, time)
+            self.timeOptionList.insert(END, self.availTimes[time])
         # update height, update the whole list if it isnt first run
         self.timeOptionList.configure(height=len(self.roomTimeList[self.roomIndex]))
         if value:
@@ -205,8 +215,9 @@ class GUI:
             return
         if self.confirmVal.get() == 1:
             outputTimes = ""
+            print selection
             for index in selection:
-                outputTimes += "\t" + self.roomTimeList[self.roomIndex][index] + "\n"
+                outputTimes += "\t" + self.availTimes[self.roomTimeList[self.roomIndex][index]] + "\n"
             if not tkMessageBox.askokcancel("Confirm dialog", "=-= Please confirm these times =-=\n\t"
                     + self.availRooms[self.roomIndex] + "\n" + outputTimes):
                 return
@@ -214,7 +225,7 @@ class GUI:
         # if output, get times
         self.outputTimeArray = []
         for index in selection:
-            self.outputTimeArray.append(self.roomTimeList[self.roomIndex][index])
+            self.outputTimeArray.append(self.availTimes[self.roomTimeList[self.roomIndex][index]])
         print self.outputTimeArray
         self.book_times()
         self.date_click()
@@ -271,15 +282,16 @@ class GUI:
                 # fill info of form
                 ActionChains(self.driver).send_keys(Keys.END).perform()
 
+                time.sleep(2)
                 self.driver.find_element_by_id("fname").send_keys(self.fnameEntry.get())
                 self.driver.find_element_by_id("lname").send_keys(self.lnameEntry.get())
                 self.driver.find_element_by_id("email").send_keys(
-                    self.emailEntry.get()[:-13] + self.id_generator() + "@lakeheadu.ca")
+                    self.emailEntry.get()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca")
                 print self.emailEntry.get()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca"
                 # submit
                 self.driver.find_element_by_id("s-lc-rm-ac-but").click()
 
-                # assert it is success then write to database
+                # assert it is success
                 try:
                     # search for success element
                     element = WebDriverWait(self.driver, 5).until(
