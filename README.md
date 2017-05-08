@@ -1,11 +1,20 @@
-# LibCalBooker
-Python app to book Lakeheadu study rooms.
+LibCal Booker
+=========
+LibCal booker is an application to book LakeheadU study rooms.
 
-# Build info
-- Install NodeJS
-- Using Node's package manager install phantomjs: npm -g install phantomjs-prebuilt
+Install  
+----------
+* Make sure Python 2.7 installed -- Check with `python`
+* Install pip (may come installed with Python)-- [Install guide](https://pip.pypa.io/en/stable/installing/)
+* Check that pip is installed with `pip -V` 
+* `pip install -U selenium`
 
-- Make sure using Python 2.7
+Run 
+-----
+* `python libCal.py`
 
-# Run info
-- python lib_cal_booker_1.py
+Optional Install 
+----
+To use PhantomJS (headless web browser)
+* Install NodeJS
+* `npm -g install phantomjs-prebuilt`
