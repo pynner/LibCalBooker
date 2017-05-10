@@ -25,7 +25,6 @@ class GUI:
 
         ################-GLOBAL-VARS-############################
         self.online = True
-        self.hide = False
         self.phantom = False
         self.driver = ""
         self.tupleDates = []
@@ -152,12 +151,9 @@ class GUI:
                 print "Fatal error - In compatible operating system"
                 exit()
 
-            # Move window to side / off screen
-            if self.hide:
-                self.driver.set_window_position(2000, 0)
-            else:
-                self.driver.set_window_position(450, 0)
-            self.driver.set_window_size(100, 1000)
+            # hide window/throw in corner
+            self.driver.set_window_position(3000,3000)
+            self.driver.set_window_size(100, 300)
         else:
             self.driver = webdriver.PhantomJS()
 
