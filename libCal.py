@@ -304,7 +304,8 @@ class GUI:
             print selection
             lineBreak = '-' * (len(self.chosenDate.get()) + 2)
             for index in selection:
-                outputTimes += "\t" + self.availTimes[self.roomTimeList[self.roomIndex][index]] + "\n"
+                pIndex = self.roomTimeList[self.roomIndex][int(index)]
+                outputTimes += "\t" + self.availTimes[pIndex] + "\n"
             if not tkMessageBox.askokcancel("=-= Please confirm these times =-=", self.chosenDate.get() + "\n" + lineBreak + "\n\t" +
                     self.availRooms[self.roomIndex] + "\n" + outputTimes):
                 return
@@ -312,11 +313,15 @@ class GUI:
         # if output, get times
         self.outputTimeArray = []
         for index in selection:
-            self.outputTimeArray.append(self.availTimes[self.roomTimeList[self.roomIndex][index]])
+            pIndex = self.roomTimeList[self.roomIndex][int(index)]
+            self.outputTimeArray.append(self.availTimes[pIndex])
         self.book_times()
 
         if len(self.outputTimeArray) != 0:
-            tkMessageBox.showerror("Error booking rooms", "Could not book rooms: " + self.outputTimeArray)
+            outputText = "The following times were unavailable to book\n----------------------------------------\n"
+            for item in self.outputTimeArray:
+                outputText += item + "\n"
+            tkMessageBox.showerror("Error booking rooms", outputText)
 
         # clear booked room time slots,
         self.roomTimeList[self.roomIndex] = [0]
