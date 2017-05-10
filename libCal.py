@@ -18,11 +18,6 @@ from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 class GUI:
     def __init__(self, master):
-        self.master = master
-        self.master.title("LibCal Booker v1.0.0")
-
-        print platform.system()
-
         ################-GLOBAL-VARS-############################
         self.online = True
         self.phantom = False
@@ -32,6 +27,11 @@ class GUI:
         self.roomIndex = 0
         self.outputTimeArray = []
         self.userInfo = []
+        self.master = master
+
+        ###############-WINDOW-SETUP-############################
+        self.master.title("LibCal Booker v1.0.0")
+        self.master.protocol("WM_DELETE_WINDOW", self.windowClose)
 
         ###############-LOAD-FILE-###############################
         try:
@@ -127,6 +127,10 @@ class GUI:
 
         # make sure window on top
         self.master.lift()
+
+    def windowClose(self):
+        self.driver.quit()
+        self.master.destroy()
 
     def load_data(self):
         # connect to webdriver - PhantomJS for headless browser
