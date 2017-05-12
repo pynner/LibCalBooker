@@ -56,7 +56,7 @@ class GUI:
         self.chosenDate.set(self.loadingMsg)
         # set up dateOptionMenu
         self.dateOptionMenu = OptionMenu(self.master, self.chosenDate, *self.availDates, command=self.date_click)
-        self.dateOptionMenu.grid(row=0, column=0, columnspan=1, sticky=(N, S, E, W), pady=(8,0))
+        self.dateOptionMenu.grid(row=0, column=0, columnspan=1, sticky=(N, S, E, W), pady=(8, 0), padx=(5, 0))
 
         ##################-ROOM SELECTION-######################
         # set up availRooms
@@ -73,11 +73,11 @@ class GUI:
         self.chosenRoom.set(self.availRooms[0])
         # set up roomOptionMenu
         self.roomOptionMenu = OptionMenu(self.master, self.chosenRoom, *self.availRooms, command=self.room_click)
-        self.roomOptionMenu.grid(row=1, column=0, columnspan=1, sticky=(N, S, E, W))
+        self.roomOptionMenu.grid(row=1, column=0, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=(5, 0))
 
         ##################-TIME SELECTION-####################
         self.timeOptionList = Listbox(self.master, selectmode=MULTIPLE, height=20, exportselection=0)
-        self.timeOptionList.grid(row=2, column=0, rowspan=10, columnspan=1, sticky=(N, S, E, W), padx=5, pady=5)
+        self.timeOptionList.grid(row=2, column=0, rowspan=200, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=5)
         self.timeOptionList.insert(0, self.loadingMsg)
 
         #################-BUTTONS-##########################
@@ -123,7 +123,7 @@ class GUI:
 
         # submit button
         self.submit = Button(self.master, text="Submit", command=self.submit_click)
-        self.submit.grid(row=6, column=2, sticky=(N, S, E, W), padx=(0, 5))
+        self.submit.grid(row=6, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
 
         # update skeleton GUI, then load data
         self.master.update()
