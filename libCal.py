@@ -6,6 +6,10 @@ import string
 import random
 import collections
 import os
+import time
+import sys
+sys.path.append(os.getcwd() + '/bin')
+
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -18,9 +22,9 @@ from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 class GUI:
     def __init__(self, master):
+        startTime = time.time()
         ################-GLOBAL-VARS-############################
-        self.online = True
-        self.phantom = False
+        self.loadingMsg = "Loading......................."
         self.driver = ""
         self.tupleDates = []
         self.roomTimeList = []
@@ -31,6 +35,7 @@ class GUI:
 
         ###############-WINDOW-SETUP-############################
         self.master.title("LibCal Booker v1.0.0")
+        self.master.resizable(width=False, height=False)
         self.master.protocol("WM_DELETE_WINDOW", self.windowClose)
 
         ###############-LOAD-FILE-###############################
@@ -45,7 +50,6 @@ class GUI:
 
         ###################-DATE SELECTION-######################
         # set up availDates
-        self.loadingMsg = "Loading......................."
         self.availDates = [self.loadingMsg]
         # set up chosen date and give default value
         self.chosenDate = StringVar(self.master)
@@ -68,7 +72,7 @@ class GUI:
         self.chosenRoom = StringVar(self.master)
         self.chosenRoom.set(self.availRooms[0])
         # set up roomOptionMenu
-        self.roomOptionMenu = OptionMenu(master, self.chosenRoom, *self.availRooms, command=self.room_click)
+        self.roomOptionMenu = OptionMenu(self.master, self.chosenRoom, *self.availRooms, command=self.room_click)
         self.roomOptionMenu.grid(row=1, column=0, columnspan=1, sticky=(N, S, E, W))
 
         ##################-TIME SELECTION-####################
@@ -78,47 +82,47 @@ class GUI:
 
         #################-BUTTONS-##########################
         # SIDE INFO
-        self.infoLabel = Label(master, text="[ U S E R  I N F O ]", font=("Helvetica", 16, "bold"))
+        self.infoLabel = Label(self.master, text="[ U S E R  I N F O ]", font=("Helvetica", 16, "bold"))
         self.infoLabel.grid(row=0, column=1, columnspan=2, sticky=E + W)
 
         # First Name label and input
-        self.fnameLabel = Label(master, text="First: ", font=("Helvetica", 12, "bold"))
+        self.fnameLabel = Label(self.master, text="First: ", font=("Helvetica", 12, "bold"))
         self.fnameLabel.grid(row=1, column=1, sticky=W)
 
-        self.fnameEntry = Entry(master)
+        self.fnameEntry = Entry(self.master)
         self.fnameEntry.grid(row=1, column=2, stick=E + W, padx=(0, 5))
         self.fnameEntry.insert(0, self.userInfo["first"])
 
         # Last name label and input
-        self.lnameLabel = Label(master, text="Last: ", font=("Helvetica", 12, "bold"))
+        self.lnameLabel = Label(self.master, text="Last: ", font=("Helvetica", 12, "bold"))
         self.lnameLabel.grid(row=2, column=1, sticky=W)
 
-        self.lnameEntry = Entry(master)
+        self.lnameEntry = Entry(self.master)
         self.lnameEntry.grid(row=2, column=2, stick=E + W, padx=(0, 5))
         self.lnameEntry.insert(0, self.userInfo["last"])
 
         # Email label and entry
-        self.emailLabel = Label(master, text="Email: ", font=("Helvetica", 12, "bold"))
+        self.emailLabel = Label(self.master, text="Email: ", font=("Helvetica", 12, "bold"))
         self.emailLabel.grid(row=3, column=1, sticky=W)
 
-        self.emailEntry = Entry(master,)
+        self.emailEntry = Entry(self.master)
         self.emailEntry.grid(row=3, column=2, stick=E + W, padx=(0, 5))
         self.emailEntry.insert(0, self.userInfo["email"])
 
         # Override checkbox
-        self.overrideVal = IntVar(master)
-        self.override = Checkbutton(master, text="Override 2hr max", variable=self.overrideVal,
+        self.overrideVal = IntVar(self.master)
+        self.override = Checkbutton(self.master, text="Override 2hr max", variable=self.overrideVal,
                                     onvalue=1, offvalue=0, font=("Helvetica", 12))
         self.override.grid(row=4, column=2, sticky=W)
 
-        self.confirmVal = IntVar(master)
+        self.confirmVal = IntVar(self.master)
         self.confirmVal.set(1)
-        self.confirm = Checkbutton(master, text="Enable confirm dialog", variable=self.confirmVal,
+        self.confirm = Checkbutton(self.master, text="Enable confirm dialog", variable=self.confirmVal,
                                    onvalue=1, offvalue=0, font=("Helvetica", 12))
         self.confirm.grid(row=5, column=2, sticky=W)
 
         # submit button
-        self.submit = Button(master, text="Submit", command=self.submit_click)
+        self.submit = Button(self.master, text="Submit", command=self.submit_click)
         self.submit.grid(row=6, column=2, sticky=(N, S, E, W), padx=(0, 5))
 
         # update skeleton GUI, then load data
@@ -127,49 +131,86 @@ class GUI:
 
         # make sure window on top
         self.master.lift()
+        print "Took %0.3f ms to load" % ((time.time() - startTime) * 1000.0)
 
     def windowClose(self):
-        self.driver.quit()
+        # clean log files if exist
+        dir = os.listdir(os.getcwd())
+        for item in dir:
+            if item.endswith(".log"):
+                os.remove(os.path.join(os.getcwd(), item))
+
+        # Destroy GUI and quit driver
         self.master.destroy()
+        self.driver.quit()
+
 
     def load_data(self):
-        # connect to webdriver - PhantomJS for headless browser
-        # FIREFOX faster
-        if not self.phantom:
-            # setup firefox profile, no images, no css for speed
-            firefox_profile = webdriver.FirefoxProfile()
-            firefox_profile.add_extension(os.getcwd() + "/ext/quickjava-2.1.2-fx.xpi")
-            firefox_profile.set_preference("thatoneguydotnet.QuickJava.curVersion", "2.1.2.1")  ## Prevents loading the 'thank you for installing screen'
-            firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Images", 2)  ## Turns images off
-            firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.AnimatedImage", 2)  ## Turns animated images off
-            firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.CSS", 2)  ## CSS
-            firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Flash", 2)  ## Flash
-            firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Java", 2)  ## Java
-            firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Silverlight", 2)  ## Silverlight
+        # connect to webdriver - Try Google Chrome, then Firefox
+        chrome = False
+        try:
+            chromeOptions = webdriver.ChromeOptions()
+            prefs = {"profile.managed_default_content_settings.images": 2,
+                     "profile.managed_default_content_settings.stylesheet": 2}
+            chromeOptions.add_experimental_option("prefs", prefs)
 
             if platform.system() == 'Darwin':
-                self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/gecko/geckodriverOSX', firefox_profile=firefox_profile)
+                self.driver = webdriver.Chrome(executable_path=os.getcwd() + '/bin/chrome/chromedriverDarwin',
+                                               chrome_options=chromeOptions)
             elif platform.system() == 'Windows':
-                self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/gecko/geckodriverWINDOWS.exe', firefox_profile=firefox_profile)
+                self.driver = webdriver.Chrome(executable_path=os.getcwd() + '/bin/chrome/chromedriverWindows.exe',
+                                               chrome_options=chromeOptions)
+            elif platform.system() == 'Linux':
+                self.driver = webdriver.Chrome(executable_path=os.getcwd() + '/bin/chrome/chromedriverLinux',
+                                               chrome_options=chromeOptions)
             else:
-                print "Fatal error - In compatible operating system"
+                print "Fatal error - incompatible operating system"
                 exit()
+            chrome = True
+        except:
+            print "Could not load Chrome, trying Firefox."
 
-            # hide window/throw in corner
-            self.driver.set_window_position(3000,3000)
-            self.driver.set_window_size(100, 300)
-        else:
-            self.driver = webdriver.PhantomJS()
+        if not chrome:
+            try:
+                # setup firefox profile, no images, no css for speed
+                firefox_profile = webdriver.FirefoxProfile()
+                firefox_profile.add_extension(os.getcwd() + "/bin/ext/quickjava-2.1.2-fx.xpi")
+                firefox_profile.set_preference("thatoneguydotnet.QuickJava.curVersion",
+                                               "2.1.2.1")  ## Prevents loading the 'thank you for installing screen'
+                firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Images",
+                                               2)  ## Turns images off
+                firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.AnimatedImage",
+                                               2)  ## Turns animated images off
+                firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.CSS", 2)  ## CSS
+                firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Flash", 2)  ## Flash
+                firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Java", 2)  ## Java
+                firefox_profile.set_preference("thatoneguydotnet.QuickJava.startupStatus.Silverlight",
+                                               2)  ## Silverlight
 
-        if not self.online:
-            self.driver.get("file:///Users/mitchellpynn/Desktop/LIB/MobileLIB_2.html")
-        else:
-            self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445")
+                # load driver according to operating system,
+                if platform.system() == 'Darwin':
+                    self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/bin/gecko/geckodriverDarwin',
+                                                    firefox_profile=firefox_profile)
+                elif platform.system() == 'Windows':
+                    self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/bin/gecko/geckodriverWindows.exe',
+                                                    firefox_profile=firefox_profile)
+                elif platform.system() == 'Linux':
+                    self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/bin/gecko/geckodriverLinux',
+                                                    firefox_profile=firefox_profile)
+                else:
+                    print "Fatal error - incompatible operating system"
+                    exit()
+            except:
+                # get no firefox exception
+                print "You must have Firefox or Google Chrome installed"
+                exit(6)
+
+        # hide window/throw in corner
+        self.driver.set_window_position(3000, 3000)
+        self.driver.set_window_size(100, 300)
+        # load intial site
+        self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445")
         assert "The Chancellor Paterson Library" in self.driver.title
-
-        # put window on top of webdriver, don't need for PhantomJS
-        if not self.phantom:
-            self.master.lift()
 
         # scrape dates, only have to do once
         self.tupleDates = collections.OrderedDict()
@@ -191,6 +232,7 @@ class GUI:
         for val in self.availDates:
             menu.add_command(label=val, command=lambda pvalue=val: self.date_click(pvalue))
 
+        # update GUI, will show current date in selection
         self.master.update()
         # Initial load times
         self.date_click()
@@ -218,15 +260,13 @@ class GUI:
         self.master.update()
 
         # load selected date webpage
-        if self.online:
-            self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445&d=" + self.tupleDates[self.chosenDate.get()] + "&cap=0")
+        self.driver.get(
+            "http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445&d=" + self.tupleDates[self.chosenDate.get()] + "&cap=0")
+
 
         # does this wait until page is loaded?
         assert "The Chancellor Paterson Library" in self.driver.title
         # make sure loaded?
-        # take screenshot of day page - remove later
-        if self.phantom:
-            self.driver.save_screenshot('checkPage.png')
 
         # create 2D array of [0]'s
         self.roomTimeList = [[0] for _ in range(16)]
