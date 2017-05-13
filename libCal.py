@@ -134,15 +134,21 @@ class GUI:
         print "Took %0.3f ms to load" % ((time.time() - startTime) * 1000.0)
 
     def windowClose(self):
+        # Destroy GUI and quit driver
+        self.master.destroy()
+        self.driver.quit()
+        
         # clean log files if exist
         dir = os.listdir(os.getcwd())
         for item in dir:
             if item.endswith(".log"):
                 os.remove(os.path.join(os.getcwd(), item))
 
-        # Destroy GUI and quit driver
-        self.master.destroy()
-        self.driver.quit()
+    # from -> http://stackoverflow.com/a/12578715
+    def is_windows_64bit(self):
+        if 'PROCESSOR_ARCHITEW6432' in os.environ:
+            return True
+        return os.environ['PROCESSOR_ARCHITECTURE'].endswith('64')
 
 
     def load_data(self):
@@ -192,8 +198,14 @@ class GUI:
                     self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/bin/gecko/geckodriverDarwin',
                                                     firefox_profile=firefox_profile)
                 elif platform.system() == 'Windows':
-                    self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/bin/gecko/geckodriverWindows.exe',
-                                                    firefox_profile=firefox_profile)
+                    if self.is_windows_64bit():
+                        self.driver = webdriver.Firefox(
+                            executable_path=os.getcwd() + '/bin/gecko/geckodriverWindows64.exe',
+                            firefox_profile=firefox_profile)
+                    else:
+                        self.driver = webdriver.Firefox(
+                            executable_path=os.getcwd() + '/bin/gecko/geckodriverWindows.exe',
+                            firefox_profile=firefox_profile)
                 elif platform.system() == 'Linux':
                     self.driver = webdriver.Firefox(executable_path=os.getcwd() + '/bin/gecko/geckodriverLinux',
                                                     firefox_profile=firefox_profile)
