@@ -394,7 +394,7 @@ class GUI:
             outputText = "The following times were unavailable to book\n----------------------------------------\n"
             for item in self.outputTimeArray:
                 outputText += item + "\n"
-            tkMessageBox.showerror("Unavailable rooms", outputText)
+            tkMessageBox.showerror("Unavailable", outputText)
 
         # clear booked room time slots,
         self.roomTimeList[self.roomIndex] = [0]
@@ -415,7 +415,7 @@ class GUI:
         assert "The Chancellor Paterson Library" in self.driver.title
         print self.outputTimeArray
 
-        outputText = self.chosenDate.get() + "\n" + '-' * (len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
+        outputText = "Successfully booked the following rooms \n" + self.chosenDate.get() + "\n" + '-' * (len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
         outputLength = 0
         while True:
             # get rooms
@@ -476,7 +476,6 @@ class GUI:
                 self.driver.find_element_by_id("lname").send_keys(self.lnameEntry.get())
                 self.driver.find_element_by_id("email").send_keys(
                     self.emailEntry.get().strip()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca")
-                print self.emailEntry.get().strip()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca"
 
                 # submit
                 self.driver.find_element_by_id("s-lc-rm-ac-but").click()
@@ -494,16 +493,14 @@ class GUI:
             # refresh page
             self.driver.refresh()
 
-            print self.outputTimeArray
-            print len(self.outputTimeArray)
-            print outputLength
             # if out of times to book or cannot book times, break out
             if len(self.outputTimeArray) <= 0 or len(self.outputTimeArray) == outputLength:
                 break
 
             outputLength = len(self.outputTimeArray)
 
-        tkMessageBox.showinfo("Successfully booked the following rooms", outputText)
+        # print success message
+        tkMessageBox.showinfo("Success", outputText)
 
     # Random ID generator -> http://stackoverflow.com/a/2257449
     def id_generator(self, size=8, chars=string.ascii_uppercase + string.digits):
