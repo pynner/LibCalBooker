@@ -9,7 +9,6 @@ import os
 import time
 import sys
 sys.path.append(os.getcwd() + '/bin')
-
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -34,9 +33,9 @@ class GUI:
         self.master = master
 
         ###############-WINDOW-SETUP-############################
-        self.master.title("LibCal Booker v1.0.0")
+        self.master.title("LibCal Booker v1.0.1")
         self.master.resizable(width=False, height=False)
-        self.master.protocol("WM_DELETE_WINDOW", self.windowClose)
+        self.master.protocol("WM_DELETE_WINDOW", self.window_close)
 
         ###############-LOAD-FILE-###############################
         try:
@@ -45,7 +44,7 @@ class GUI:
         except:
             print "No existing user"
             with open("userInfo.json", "w+") as data_file:
-                self.userInfo = dict(first="Mike", last="Anderson", email="mand@lakeheadu.ca")
+                self.userInfo = dict(first="Mike", last="Anderson", email="mand@lakeheadu.ca", override=0, confirm=1, firstLoad=True)
                 json.dump(self.userInfo, data_file)
 
         ###################-DATE SELECTION-######################
@@ -111,33 +110,35 @@ class GUI:
 
         # Override checkbox
         self.overrideVal = IntVar(self.master)
+        self.overrideVal.set(self.userInfo["override"])
         self.override = Checkbutton(self.master, text="Override 2hr max", variable=self.overrideVal,
                                     onvalue=1, offvalue=0, font=("Helvetica", 12))
         self.override.grid(row=4, column=2, sticky=W)
 
+        # Confirm checkbox
         self.confirmVal = IntVar(self.master)
-        self.confirmVal.set(1)
+        self.confirmVal.set(self.userInfo["confirm"])
         self.confirm = Checkbutton(self.master, text="Enable confirm dialog", variable=self.confirmVal,
                                    onvalue=1, offvalue=0, font=("Helvetica", 12))
         self.confirm.grid(row=5, column=2, sticky=W)
 
-        # submit button
+        # Submit button
         self.submit = Button(self.master, text="Submit", command=self.submit_click)
         self.submit.grid(row=6, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
 
-        # update skeleton GUI, then load data
+        # Update skeleton GUI, then load data
         self.master.update()
         self.load_data()
 
-        # make sure window on top
+        # Make sure window on top
         self.master.lift()
         print "Took %0.3f ms to load" % ((time.time() - startTime) * 1000.0)
 
-    def windowClose(self):
+    def window_close(self):
         # Destroy GUI and quit driver
         self.master.destroy()
         self.driver.quit()
-        
+
         # clean log files if exist
         dir = os.listdir(os.getcwd())
         for item in dir:
@@ -149,7 +150,6 @@ class GUI:
         if 'PROCESSOR_ARCHITEW6432' in os.environ:
             return True
         return os.environ['PROCESSOR_ARCHITECTURE'].endswith('64')
-
 
     def load_data(self):
         # connect to webdriver - Try Google Chrome, then Firefox
@@ -338,6 +338,9 @@ class GUI:
             self.userInfo["first"] = self.fnameEntry.get()
             self.userInfo["last"] = self.lnameEntry.get()
             self.userInfo["email"] = self.emailEntry.get()
+            self.userInfo["confirm"] = self.confirmVal.get()
+            self.userInfo["override"] = self.overrideVal.get()
+            self.userInfo["firstLoad"] = False
 
             data_file.seek(0)
             json.dump(self.userInfo, data_file)
