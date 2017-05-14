@@ -8,6 +8,7 @@ import collections
 import os
 import time
 import sys
+
 sys.path.append(os.getcwd() + '/bin')
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -36,6 +37,7 @@ class GUI:
         self.master.title("LibCal Booker v1.0.1")
         self.master.resizable(width=False, height=False)
         self.master.protocol("WM_DELETE_WINDOW", self.window_close)
+        self.master.createcommand('exit', self.window_close)
 
         ###############-LOAD-FILE-###############################
         try:
@@ -44,7 +46,8 @@ class GUI:
         except:
             print "No existing user"
             with open("userInfo.json", "w+") as data_file:
-                self.userInfo = dict(first="Mike", last="Anderson", email="mand@lakeheadu.ca", override=0, confirm=1, firstLoad=True)
+                self.userInfo = dict(first="Mitchell", last="Pynn", email="mpynn@lakeheadu.ca", override=0, confirm=1,
+                                     firstLoad=True)
                 json.dump(self.userInfo, data_file)
 
         ###################-DATE SELECTION-######################
@@ -61,12 +64,18 @@ class GUI:
         # set up availRooms
         self.availRooms = ['LI 1004', 'LI 1006', 'LI 1007', 'LI 1008', 'LI 1009', 'LI 1010', 'LI 4001', 'LI 4002',
                            'LI 4003', 'LI 4004', 'LI 4005', 'LI 4006', 'LI 4007', 'LI 4008', 'LI 4009', 'LI 4010']
-        self.availTimes = ['8:00am - 8:30am', '8:30am - 9:00am', '9:00am - 9:30am', '9:30am - 10:00am', '10:00am - 10:30am',
-                           '10:30am - 11:00am', '11:00am - 11:30am', '11:30am - 12:00pm', '12:00pm - 12:30pm', '12:30pm - 1:00pm',
-                           '1:00pm - 1:30pm', '1:30pm - 2:00pm', '2:00pm - 2:30pm', '2:30pm - 3:00pm', '3:00pm - 3:30pm',
-                           '3:30pm - 4:00pm', '4:00pm - 4:30pm', '4:30pm - 5:00pm', '5:00pm - 5:30pm', '5:30pm - 6:00pm', '6:00pm - 6:30pm',
-                           '6:30pm - 7:00pm', '7:00pm - 7:30pm', '7:30pm - 8:00pm', '8:00pm - 8:30pm', '8:30pm - 9:00pm', '9:00pm - 9:30pm',
-                           '9:30pm - 10:00pm', '10:00pm - 10:30pm', '10:30pm - 11:00pm', '11:00pm - 11:30pm', '11:30pm - 11:59pm']
+        self.availTimes = ['8:00am - 8:30am', '8:30am - 9:00am', '9:00am - 9:30am', '9:30am - 10:00am',
+                           '10:00am - 10:30am',
+                           '10:30am - 11:00am', '11:00am - 11:30am', '11:30am - 12:00pm', '12:00pm - 12:30pm',
+                           '12:30pm - 1:00pm',
+                           '1:00pm - 1:30pm', '1:30pm - 2:00pm', '2:00pm - 2:30pm', '2:30pm - 3:00pm',
+                           '3:00pm - 3:30pm',
+                           '3:30pm - 4:00pm', '4:00pm - 4:30pm', '4:30pm - 5:00pm', '5:00pm - 5:30pm',
+                           '5:30pm - 6:00pm', '6:00pm - 6:30pm',
+                           '6:30pm - 7:00pm', '7:00pm - 7:30pm', '7:30pm - 8:00pm', '8:00pm - 8:30pm',
+                           '8:30pm - 9:00pm', '9:00pm - 9:30pm',
+                           '9:30pm - 10:00pm', '10:00pm - 10:30pm', '10:30pm - 11:00pm', '11:00pm - 11:30pm',
+                           '11:30pm - 11:59pm']
         # set up chosen room and give default value
         self.chosenRoom = StringVar(self.master)
         self.chosenRoom.set(self.availRooms[0])
@@ -134,7 +143,28 @@ class GUI:
         self.master.lift()
         print "Took %0.3f ms to load" % ((time.time() - startTime) * 1000.0)
 
+        # show welcome message if first load
+        if self.userInfo["firstLoad"]:
+            tkMessageBox.showinfo("Welcome",
+                                  "Currently, booking multiple rooms is not permitted. You are limited to only booking one room per session. However, booking multiple time slots per room is permitted.\n\nMake sure to update the User Info section with your own name and email. Once you submit rooms to be booked, you must check your lakeheadu email and confirm the rooms.\n\nCreated by Mitchell Pynn ")
+
+    def save_data(self):
+        # update userFile when submitted
+        with open("userInfo.json", 'r+') as data_file:
+            self.userInfo["first"] = self.fnameEntry.get()
+            self.userInfo["last"] = self.lnameEntry.get()
+            self.userInfo["email"] = self.emailEntry.get()
+            self.userInfo["confirm"] = self.confirmVal.get()
+            self.userInfo["override"] = self.overrideVal.get()
+            self.userInfo["firstLoad"] = False
+
+            data_file.seek(0)
+            json.dump(self.userInfo, data_file)
+            data_file.truncate()
+
     def window_close(self):
+        # save data
+        self.save_data()
         # Destroy GUI and quit driver
         self.master.destroy()
         self.driver.quit()
@@ -144,6 +174,7 @@ class GUI:
         for item in dir:
             if item.endswith(".log"):
                 os.remove(os.path.join(os.getcwd(), item))
+
 
     # from -> http://stackoverflow.com/a/12578715
     def is_windows_64bit(self):
@@ -264,8 +295,6 @@ class GUI:
                 return
             else:
                 self.chosenDate.set(value)
-        print self.chosenDate.get()
-
         # clear timeOptionList contents, showing loading message
         self.timeOptionList.delete(0, END)
         self.timeOptionList.insert(0, self.loadingMsg)
@@ -274,7 +303,6 @@ class GUI:
         # load selected date webpage
         self.driver.get(
             "http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445&d=" + self.tupleDates[self.chosenDate.get()] + "&cap=0")
-
 
         # does this wait until page is loaded?
         assert "The Chancellor Paterson Library" in self.driver.title
@@ -333,36 +361,23 @@ class GUI:
             tkMessageBox.showerror("Email format error", "Please make sure to use a valid @lakeheadu.ca email address")
             return
 
-        # update userFile when submitted
-        with open("userInfo.json", 'r+') as data_file:
-            self.userInfo["first"] = self.fnameEntry.get()
-            self.userInfo["last"] = self.lnameEntry.get()
-            self.userInfo["email"] = self.emailEntry.get()
-            self.userInfo["confirm"] = self.confirmVal.get()
-            self.userInfo["override"] = self.overrideVal.get()
-            self.userInfo["firstLoad"] = False
-
-            data_file.seek(0)
-            json.dump(self.userInfo, data_file)
-            data_file.truncate()
-
+        self.save_data()
 
         selection = self.timeOptionList.curselection()
         if selection == ():
-            print "Nothing to book"
             return
         if len(selection) > 4 and self.overrideVal.get() != 1:
             tkMessageBox.showerror("2hr Limit", "Sorry, you can only book 2hrs per day")
             return
         if self.confirmVal.get() == 1:
             outputTimes = ""
-            print selection
             lineBreak = '-' * (len(self.chosenDate.get()) + 2)
             for index in selection:
                 pIndex = self.roomTimeList[self.roomIndex][int(index)]
-                outputTimes += "\t" + self.availTimes[pIndex] + "\n"
-            if not tkMessageBox.askokcancel("=-= Please confirm these times =-=", self.chosenDate.get() + "\n" + lineBreak + "\n\t" +
-                    self.availRooms[self.roomIndex] + "\n" + outputTimes):
+                outputTimes += self.availTimes[pIndex] + "\n"
+            if not tkMessageBox.askokcancel("Please confirm the following times",
+                                            self.chosenDate.get() + "\n" + lineBreak + "\n" +
+                                                    self.availRooms[self.roomIndex] + "\n" + outputTimes):
                 return
 
         # if output, get times
@@ -370,18 +385,20 @@ class GUI:
         for index in selection:
             pIndex = self.roomTimeList[self.roomIndex][int(index)]
             self.outputTimeArray.append(self.availTimes[pIndex])
+
+        # book rooms
         self.book_times()
 
+        # check if any rooms were unavailable
         if len(self.outputTimeArray) != 0:
             outputText = "The following times were unavailable to book\n----------------------------------------\n"
             for item in self.outputTimeArray:
                 outputText += item + "\n"
-            tkMessageBox.showerror("Error booking rooms", outputText)
+            tkMessageBox.showerror("Unavailable rooms", outputText)
 
         # clear booked room time slots,
         self.roomTimeList[self.roomIndex] = [0]
         self.room_click()
-
 
     def book_times(self):
         # >Go through selected items
@@ -392,11 +409,13 @@ class GUI:
 
         print "Booking times now. Please wait...."
         # make sure connection is alive ######## not sure if best wei
+        # also makes sure the page has newest times, could change since GUI loaded
         # refresh page
         self.driver.refresh()
         assert "The Chancellor Paterson Library" in self.driver.title
         print self.outputTimeArray
 
+        outputText = self.chosenDate.get() + "\n" + '-' * (len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
         outputLength = 0
         while True:
             # get rooms
@@ -407,16 +426,14 @@ class GUI:
                 # find selected room
                 if room.find_element_by_tag_name("h2").text[:7] != self.availRooms[self.roomIndex]:
                     continue
-                print "Found room " + room.find_element_by_tag_name("h2").text[:7] + ", now booking..."
 
                 consect = 0
                 selectedTimes = []
                 checkBoxes = room.find_elements_by_class_name("checkbox")
                 for box in checkBoxes:
-                    # loops through times from start every  time, how can I keep place of where left off?
+                    # loops through times from start every time, how can I keep place of where left off?
                     timeSlot = box.find_element_by_tag_name("label")
                     if timeSlot.text in self.outputTimeArray:
-                        print timeSlot.text
                         consect += 1
                         # adding another time will not overflow 2hrs, add it
                         if consect <= 4:
@@ -426,7 +443,9 @@ class GUI:
                                 for selectedIndex in selectedTimes:
                                     # check if time is in consecutive order
                                     # can I put or in between two conditions????
-                                    if (self.availTimes.index(timeSlot.text) - 1) == selectedIndex or (self.availTimes.index(timeSlot.text) + 1) == selectedIndex:
+                                    if (self.availTimes.index(timeSlot.text) - 1) == selectedIndex or (
+                                        self.availTimes.index(timeSlot.text) + 1) == selectedIndex:
+                                        outputText += "\n" + timeSlot.text
                                         # add to selectedTimes
                                         selectedTimes.append(self.availTimes.index(timeSlot.text))
                                         # remove timeSlot from array
@@ -435,6 +454,7 @@ class GUI:
                                         timeSlot.click()
                                         break
                             else:
+                                outputText += "\n" + timeSlot.text
                                 # add to selectedTimes
                                 selectedTimes.append(self.availTimes.index(timeSlot.text))
                                 # remove timeSlot from array
@@ -454,7 +474,8 @@ class GUI:
                 # fill info of form
                 self.driver.find_element_by_id("fname").send_keys(self.fnameEntry.get())
                 self.driver.find_element_by_id("lname").send_keys(self.lnameEntry.get())
-                self.driver.find_element_by_id("email").send_keys(self.emailEntry.get().strip()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca")
+                self.driver.find_element_by_id("email").send_keys(
+                    self.emailEntry.get().strip()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca")
                 print self.emailEntry.get().strip()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca"
 
                 # submit
@@ -481,6 +502,8 @@ class GUI:
                 break
 
             outputLength = len(self.outputTimeArray)
+
+        tkMessageBox.showinfo("Successfully booked the following rooms", outputText)
 
     # Random ID generator -> http://stackoverflow.com/a/2257449
     def id_generator(self, size=8, chars=string.ascii_uppercase + string.digits):
