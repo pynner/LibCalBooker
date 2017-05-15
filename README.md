@@ -6,7 +6,7 @@ Prerequisites
 ----------
 * Google Chrome or Firefox installed
 * Python 2.7 
-* python set as a environment variable
+* python set as an environment variable
 
 Run 
 -----
