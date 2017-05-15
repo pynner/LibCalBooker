@@ -1,13 +1,12 @@
-from Tkinter import *
-import tkMessageBox
-import platform
-import json
-import string
-import random
 import collections
+import json
 import os
+import platform
+import random
+import string
 import time
-import sys
+import tkMessageBox
+from Tkinter import *
 
 sys.path.append(os.getcwd() + '/bin')
 from selenium import webdriver
@@ -15,9 +14,6 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 
 class GUI:
@@ -174,7 +170,6 @@ class GUI:
         for item in dir:
             if item.endswith(".log"):
                 os.remove(os.path.join(os.getcwd(), item))
-
 
     # from -> http://stackoverflow.com/a/12578715
     def is_windows_64bit(self):
@@ -390,7 +385,7 @@ class GUI:
         self.book_times()
 
         # check if any rooms were unavailable
-        if len(self.outputTimeArray) != 0:
+        if len(self.outputTimeArray) > 0:
             outputText = "The following times were unavailable to book\n----------------------------------------\n"
             for item in self.outputTimeArray:
                 outputText += item + "\n"
@@ -415,7 +410,8 @@ class GUI:
         assert "The Chancellor Paterson Library" in self.driver.title
         print self.outputTimeArray
 
-        outputText = "Successfully booked the following rooms \n" + self.chosenDate.get() + "\n" + '-' * (len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
+        outputText = "Successfully booked the following rooms \n" + self.chosenDate.get() + "\n" + '-' * (
+        len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
         outputLength = 0
         while True:
             # get rooms
@@ -444,7 +440,7 @@ class GUI:
                                     # check if time is in consecutive order
                                     # can I put or in between two conditions????
                                     if (self.availTimes.index(timeSlot.text) - 1) == selectedIndex or (
-                                        self.availTimes.index(timeSlot.text) + 1) == selectedIndex:
+                                                self.availTimes.index(timeSlot.text) + 1) == selectedIndex:
                                         outputText += "\n" + timeSlot.text
                                         # add to selectedTimes
                                         selectedTimes.append(self.availTimes.index(timeSlot.text))
@@ -500,7 +496,8 @@ class GUI:
             outputLength = len(self.outputTimeArray)
 
         # print success message
-        tkMessageBox.showinfo("Success", outputText)
+        if len(self.outputTimeArray) <= 0:
+            tkMessageBox.showinfo("Success", outputText)
 
     # Random ID generator -> http://stackoverflow.com/a/2257449
     def id_generator(self, size=8, chars=string.ascii_uppercase + string.digits):
