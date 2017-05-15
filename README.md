@@ -6,8 +6,8 @@ Prerequisites
 ----------
 * Google Chrome or Firefox installed
 * Python 2.7 
-* python set as a PATH variable
+* python set as a environment variable
 
 Run 
 -----
-* `python libCal.py`
+* run `python libCal.py` from the command line
