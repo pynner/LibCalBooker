@@ -89,7 +89,7 @@ class GUI:
         self.infoLabel = Label(self.master, text="[ U S E R  I N F O ]", font=("Helvetica", 16, "bold"))
         self.infoLabel.grid(row=0, column=1, columnspan=2, sticky=E + W)
 
-        # First Name label and input
+        # first Name label and input
         self.fnameLabel = Label(self.master, text="First: ", font=("Helvetica", 12, "bold"))
         self.fnameLabel.grid(row=1, column=1, sticky=W)
 
@@ -97,7 +97,7 @@ class GUI:
         self.fnameEntry.grid(row=1, column=2, stick=E + W, padx=(0, 5))
         self.fnameEntry.insert(0, self.userInfo["first"])
 
-        # Last name label and input
+        # last name label and input
         self.lnameLabel = Label(self.master, text="Last: ", font=("Helvetica", 12, "bold"))
         self.lnameLabel.grid(row=2, column=1, sticky=W)
 
@@ -105,7 +105,7 @@ class GUI:
         self.lnameEntry.grid(row=2, column=2, stick=E + W, padx=(0, 5))
         self.lnameEntry.insert(0, self.userInfo["last"])
 
-        # Email label and entry
+        # email label and entry
         self.emailLabel = Label(self.master, text="Email: ", font=("Helvetica", 12, "bold"))
         self.emailLabel.grid(row=3, column=1, sticky=W)
 
@@ -113,29 +113,29 @@ class GUI:
         self.emailEntry.grid(row=3, column=2, stick=E + W, padx=(0, 5))
         self.emailEntry.insert(0, self.userInfo["email"])
 
-        # Override checkbox
+        # override checkbox
         self.overrideVal = IntVar(self.master)
         self.overrideVal.set(self.userInfo["override"])
         self.override = Checkbutton(self.master, text="Override 2hr max", variable=self.overrideVal,
                                     onvalue=1, offvalue=0, font=("Helvetica", 12))
         self.override.grid(row=4, column=2, sticky=W)
 
-        # Confirm checkbox
+        # confirm checkbox
         self.confirmVal = IntVar(self.master)
         self.confirmVal.set(self.userInfo["confirm"])
         self.confirm = Checkbutton(self.master, text="Enable confirm dialog", variable=self.confirmVal,
                                    onvalue=1, offvalue=0, font=("Helvetica", 12))
         self.confirm.grid(row=5, column=2, sticky=W)
 
-        # Submit button
+        # submit button
         self.submit = Button(self.master, text="Submit", command=self.submit_click)
         self.submit.grid(row=6, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
 
-        # Update skeleton GUI, then load data
+        # update skeleton GUI, then load data
         self.master.update()
         self.load_data()
 
-        # Make sure window on top
+        # make sure window on top
         self.master.lift()
         print "Took %0.3f ms to load" % ((time.time() - startTime) * 1000.0)
 
@@ -161,11 +161,11 @@ class GUI:
     def window_close(self):
         # save data
         self.save_data()
-        # Destroy GUI and quit driver
+        # destroy GUI and quit driver
         self.master.destroy()
         self.driver.quit()
 
-        # clean log files if exist
+        # clean log files if exist (maybe good to keep?)
         dir = os.listdir(os.getcwd())
         for item in dir:
             if item.endswith(".log"):
@@ -256,15 +256,15 @@ class GUI:
         for date in dateWheel.options:
             self.tupleDates[date.text] = date.get_attribute("value")
 
-        # Remove loading option, pull dates from tuple to list
-        # Set chosen date to top entry in date list
-        # {'Monday June 1st': '06-01-17'}
+        # remove loading option, pull dates from tuple to list
+        # set chosen date to top entry in date list
+        # format: {'Monday June 1st': '06-01-17'}
         self.availDates.remove(self.loadingMsg)
         for key, value in self.tupleDates.iteritems():
             self.availDates.append(key)
         self.chosenDate.set(self.availDates[0])
 
-        # Get menu, clear and add dates
+        # get menu, clear and add dates
         menu = self.dateOptionMenu["menu"]
         menu.delete(0, "end")
         for val in self.availDates:
@@ -272,9 +272,9 @@ class GUI:
 
         # update GUI, will show current date in selection
         self.master.update()
-        # Initial load times
+        # initial load data
         self.date_click()
-        # Make sure on top
+        # make sure on top
         self.master.lift()
 
     def date_click(self, value=""):
@@ -344,12 +344,13 @@ class GUI:
         # update height, update the whole list if it isnt first run
         self.timeOptionList.configure(height=len(self.roomTimeList[self.roomIndex]))
 
-        # Colorize alternating lines of the listbox
+        # colorize alternating lines of the listbox
         for i in range(0, len(self.roomTimeList[self.roomIndex]), 2):
             self.timeOptionList.itemconfigure(i, background='#f0f0ff')
 
-        # Update GUI size
+        # update GUI size
         self.master.update()
+        
 
     def submit_click(self):
         if self.emailEntry.get().strip()[-13:] != "@lakeheadu.ca":
@@ -470,6 +471,9 @@ class GUI:
                 # fill info of form
                 self.driver.find_element_by_id("fname").send_keys(self.fnameEntry.get())
                 self.driver.find_element_by_id("lname").send_keys(self.lnameEntry.get())
+
+                # always uses random_id, override 2hrs just prevents user from booking more
+                # then 2hrs at a time
                 self.driver.find_element_by_id("email").send_keys(
                     self.emailEntry.get().strip()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca")
 
@@ -499,7 +503,7 @@ class GUI:
         if len(self.outputTimeArray) <= 0:
             tkMessageBox.showinfo("Success", outputText)
 
-    # Random ID generator -> http://stackoverflow.com/a/2257449
+    # random ID generator -> http://stackoverflow.com/a/2257449
     def id_generator(self, size=8, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for _ in range(size))
 
