@@ -43,7 +43,7 @@ class GUI:
             print "No existing user"
             with open("userInfo.json", "w+") as data_file:
                 self.userInfo = dict(first="Mitchell", last="Pynn", email="mpynn@lakeheadu.ca", override=0, confirm=1,
-                                     firstLoad=True)
+                                     browser=0, firstLoad=True)
                 json.dump(self.userInfo, data_file)
 
         ###################-DATE SELECTION-######################
@@ -83,6 +83,7 @@ class GUI:
         self.timeOptionList = Listbox(self.master, selectmode=MULTIPLE, height=20, exportselection=0)
         self.timeOptionList.grid(row=2, column=0, rowspan=200, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=5)
         self.timeOptionList.insert(0, self.loadingMsg)
+        self.timeOptionList.bind('<<ListboxSelect>>', self.onselect)
 
         #################-BUTTONS-##########################
         # SIDE INFO
@@ -113,23 +114,30 @@ class GUI:
         self.emailEntry.grid(row=3, column=2, stick=E + W, padx=(0, 5))
         self.emailEntry.insert(0, self.userInfo["email"])
 
+        # showBrowser checkbox
+        self.browserVal = IntVar(self.master)
+        self.browserVal.set(self.userInfo["browser"])
+        self.browser = Checkbutton(self.master, text="Show web browser", variable=self.browserVal,
+                                   command=self.browserShow, onvalue=1, offvalue=0, font=("Helvetica", 12))
+        self.browser.grid(row=4, column=2, sticky=W)
+
         # override checkbox
         self.overrideVal = IntVar(self.master)
         self.overrideVal.set(self.userInfo["override"])
         self.override = Checkbutton(self.master, text="Override 2hr max", variable=self.overrideVal,
                                     onvalue=1, offvalue=0, font=("Helvetica", 12))
-        self.override.grid(row=4, column=2, sticky=W)
+        self.override.grid(row=5, column=2, sticky=W)
 
         # confirm checkbox
         self.confirmVal = IntVar(self.master)
         self.confirmVal.set(self.userInfo["confirm"])
         self.confirm = Checkbutton(self.master, text="Enable confirm dialog", variable=self.confirmVal,
                                    onvalue=1, offvalue=0, font=("Helvetica", 12))
-        self.confirm.grid(row=5, column=2, sticky=W)
+        self.confirm.grid(row=6, column=2, sticky=W)
 
         # submit button
         self.submit = Button(self.master, text="Submit", command=self.submit_click)
-        self.submit.grid(row=6, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
+        self.submit.grid(row=8, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
 
         # update skeleton GUI, then load data
         self.master.update()
@@ -143,6 +151,23 @@ class GUI:
         if self.userInfo["firstLoad"]:
             tkMessageBox.showinfo("Welcome",
                                   "Currently, booking multiple rooms is not permitted. You are limited to only booking one room per session. However, booking multiple time slots per room is permitted.\n\nMake sure to update the User Info section with your own name and email. Once you submit rooms to be booked, you must check your lakeheadu email and confirm the rooms.\n\nCreated by Mitchell Pynn ")
+
+    def onselect(self, evt):
+        # Note here that Tkinter passes an event object to onselect()
+        w = evt.widget
+        index = int(w.curselection()[0])
+        value = w.get(index)
+        print 'You selected item %d: "%s"' % (index, value)
+
+    def browserShow(self):
+        if self.browserVal.get() == 1:
+            # hide window/throw in corner
+            self.driver.set_window_position(0, 0)
+            self.driver.set_window_size(100, 600)
+        else:
+            # hide window/throw in corner
+            self.driver.set_window_position(3000, 3000)
+            self.driver.set_window_size(100, 300)
 
     def save_data(self):
         # update userFile when submitted
@@ -176,6 +201,8 @@ class GUI:
         if 'PROCESSOR_ARCHITEW6432' in os.environ:
             return True
         return os.environ['PROCESSOR_ARCHITECTURE'].endswith('64')
+
+
 
     def load_data(self):
         # connect to webdriver - Try Google Chrome, then Firefox
@@ -243,9 +270,9 @@ class GUI:
                 print "You must have Firefox or Google Chrome installed"
                 exit(6)
 
-        # hide window/throw in corner
-        self.driver.set_window_position(3000, 3000)
-        self.driver.set_window_size(100, 300)
+        # hide window/throw in corner or show
+        self.browserShow()
+        
         # load intial site
         self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445")
         assert "The Chancellor Paterson Library" in self.driver.title
@@ -350,9 +377,10 @@ class GUI:
 
         # update GUI size
         self.master.update()
-        
+
 
     def submit_click(self):
+        print self.timeOptionList.selection_includes(0)
         if self.emailEntry.get().strip()[-13:] != "@lakeheadu.ca":
             tkMessageBox.showerror("Email format error", "Please make sure to use a valid @lakeheadu.ca email address")
             return
