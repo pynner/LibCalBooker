@@ -80,10 +80,9 @@ class GUI:
         self.roomOptionMenu.grid(row=1, column=0, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=(5, 0))
 
         ##################-TIME SELECTION-####################
-        self.timeOptionList = Listbox(self.master, selectmode=MULTIPLE, height=20, exportselection=0)
+        self.timeOptionList = Listbox(self.master, selectmode=EXTENDED, height=20, exportselection=0)
         self.timeOptionList.grid(row=2, column=0, rowspan=200, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=5)
         self.timeOptionList.insert(0, self.loadingMsg)
-        self.timeOptionList.bind('<<ListboxSelect>>', self.onselect)
 
         #################-BUTTONS-##########################
         # SIDE INFO
@@ -152,12 +151,6 @@ class GUI:
             tkMessageBox.showinfo("Welcome",
                                   "Currently, booking multiple rooms is not permitted. You are limited to only booking one room per session. However, booking multiple time slots per room is permitted.\n\nMake sure to update the User Info section with your own name and email. Once you submit rooms to be booked, you must check your lakeheadu email and confirm the rooms.\n\nCreated by Mitchell Pynn ")
 
-    def onselect(self, evt):
-        # Note here that Tkinter passes an event object to onselect()
-        w = evt.widget
-        index = int(w.curselection()[0])
-        value = w.get(index)
-        print 'You selected item %d: "%s"' % (index, value)
 
     def browserShow(self):
         if self.browserVal.get() == 1:
@@ -177,6 +170,7 @@ class GUI:
             self.userInfo["email"] = self.emailEntry.get()
             self.userInfo["confirm"] = self.confirmVal.get()
             self.userInfo["override"] = self.overrideVal.get()
+            self.userInfo["browser"] = self.browserVal.get()
             self.userInfo["firstLoad"] = False
 
             data_file.seek(0)
@@ -272,7 +266,7 @@ class GUI:
 
         # hide window/throw in corner or show
         self.browserShow()
-        
+
         # load intial site
         self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445")
         assert "The Chancellor Paterson Library" in self.driver.title
@@ -435,7 +429,10 @@ class GUI:
         # make sure connection is alive ######## not sure if best wei
         # also makes sure the page has newest times, could change since GUI loaded
         # refresh page
-        self.driver.refresh()
+        try:
+            self.driver.refresh()
+        except:
+            print "Could not load the browser"
         assert "The Chancellor Paterson Library" in self.driver.title
         print self.outputTimeArray
 
