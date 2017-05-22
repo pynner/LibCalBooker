@@ -1,20 +1,16 @@
 LibCal Booker
 =========
-LibCal booker is an application to book LakeheadU study rooms.
+LibCal booker is an open source tool to make booking LibCal study rooms easier. 
 
-Install  
+Currently configured for Lakehead University study rooms, but can be forked and adjusted for other schools using LibCal software.
+
+
+Prerequisites  
 ----------
-* Make sure Python 2.7 installed -- Check with `python`
-* Install pip (may come installed with Python)-- [Install guide](https://pip.pypa.io/en/stable/installing/)
-* Check that pip is installed with `pip -V` 
-* `pip install -U selenium`
+* Google Chrome or Firefox installed
+* Python 2.7 
+* python set as an environment variable
 
 Run 
 -----
-* `python libCal.py`
-
-Optional Install 
-----
-To use PhantomJS (headless web browser)
-* Install NodeJS
-* `npm -g install phantomjs-prebuilt`
+* run `python libCal.py` from the project root
