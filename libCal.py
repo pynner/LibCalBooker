@@ -4,7 +4,6 @@ import os
 import platform
 import random
 import string
-import time
 import tkMessageBox
 from Tkinter import *
 from ttk import Progressbar
@@ -19,7 +18,6 @@ from selenium.webdriver.support import expected_conditions as EC
 
 class GUI:
     def __init__(self, master):
-        startTime = time.time()
         ################-GLOBAL-VARS-############################
         self.loadingMsg = "Loading......................."
         self.driver = ""
@@ -88,7 +86,7 @@ class GUI:
         self.timeOptionList.config(state=DISABLED)
 
         #################-BUTTONS-##########################
-        # SIDE INFO
+        # user info
         self.infoLabel = Label(self.master, text="[ U S E R  I N F O ]", font=("Helvetica", 16, "bold"))
         self.infoLabel.grid(row=0, column=1, columnspan=2, sticky=E + W)
 
@@ -120,7 +118,8 @@ class GUI:
         self.browserVal = IntVar(self.master)
         self.browserVal.set(self.userInfo["browser"])
         self.browser = Checkbutton(self.master, text="Show web browser", variable=self.browserVal,
-                                   command=self.browserShow, onvalue=1, offvalue=0, font=("Helvetica", 12), takefocus=0)
+                                   command=self.browser_show, onvalue=1, offvalue=0, font=("Helvetica", 12),
+                                   takefocus=0)
         self.browser.grid(row=4, column=2, sticky=W)
 
         # override checkbox
@@ -149,21 +148,17 @@ class GUI:
 
         # update skeleton GUI, then load data
         self.master.update()
-
-        # load data in new thread
         self.load_data()
 
         # make sure window on top
         self.master.lift()
-        print "Took %0.3f ms to load" % ((time.time() - startTime) * 1000.0)
 
         # show welcome message if first load
         if self.userInfo["firstLoad"]:
             tkMessageBox.showinfo("Welcome",
                                   "Currently, booking multiple rooms is not permitted. You are limited to only booking one room per session. However, booking multiple time slots per room is permitted.\n\nMake sure to update the User Info section with your own name and email. Once you submit rooms to be booked, you must check your lakeheadu email and confirm the rooms.\n\nCreated by Mitchell Pynn ")
 
-
-    def browserShow(self):
+    def browser_show(self):
         if self.browserVal.get() == 1:
             # hide window/throw in corner
             self.driver.set_window_position(0, 0)
@@ -206,8 +201,6 @@ class GUI:
         if 'PROCESSOR_ARCHITEW6432' in os.environ:
             return True
         return os.environ['PROCESSOR_ARCHITECTURE'].endswith('64')
-
-
 
     def load_data(self):
         self.loadingBar["value"] = 25
@@ -279,12 +272,11 @@ class GUI:
                 exit(6)
 
         # hide window/throw in corner or show
-        self.browserShow()
+        self.browser_show()
         self.master.lift()
 
         self.loadingBar["value"] = 50
         self.master.update_idletasks()
-
 
         # load intial site
         self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445")
@@ -321,12 +313,6 @@ class GUI:
         self.master.lift()
 
     def date_click(self, value=""):
-        # >Set chosenDate
-        # >Load new page
-        # >Pull new times from page
-        # >> Only load first times, too slow otherwise
-        # >Call func to update times for selected room
-
         # do nothing if same day clicked
         if value:
             if self.chosenDate.get() == value:
@@ -388,7 +374,6 @@ class GUI:
             self.loadingBar["value"] = 80
             self.master.update_idletasks()
 
-
         # don't scrape again if already loaded
         if self.roomTimeList[self.roomIndex] == [0]:
             for room in rooms:
@@ -428,7 +413,6 @@ class GUI:
         # update GUI size and remove loading bar
         self.submit["state"] = "normal"
         self.master.update()
-
 
     def submit_click(self, value=""):
         if self.emailEntry.get().strip()[-13:] != "@lakeheadu.ca":
@@ -475,15 +459,6 @@ class GUI:
         self.room_click()
 
     def book_times(self):
-        # >Go through selected items
-        # >Book in largest chunk as possible
-        # >Use ID_gen on every email
-        # >Check response on each booking, make sure confirmed
-        # >>If not confirmed, see if maxed out hours/room already booked
-
-        print "Booking times now. Please wait...."
-        # make sure connection is alive ######## not sure if best wei
-        # also makes sure the page has newest times, could change since GUI loaded
         # refresh page
         try:
             self.driver.refresh()
@@ -492,7 +467,7 @@ class GUI:
         assert "The Chancellor Paterson Library" in self.driver.title
 
         outputText = "Successfully booked the following rooms \n" + self.chosenDate.get() + "\n" + '-' * (
-        len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
+            len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
         outputLength = 0
         while True:
             # get rooms
