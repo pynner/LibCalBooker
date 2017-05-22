@@ -35,6 +35,7 @@ class GUI:
         self.master.resizable(width=False, height=False)
         self.master.protocol("WM_DELETE_WINDOW", self.window_close)
         self.master.createcommand('exit', self.window_close)
+        self.master.bind('<Return>', self.submit_click)
 
         ###############-LOAD-FILE-###############################
         try:
@@ -81,7 +82,7 @@ class GUI:
         self.roomOptionMenu.grid(row=1, column=0, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=(5, 0))
 
         ##################-TIME SELECTION-####################
-        self.timeOptionList = Listbox(self.master, selectmode=EXTENDED, height=20, exportselection=0)
+        self.timeOptionList = Listbox(self.master, selectmode=EXTENDED, height=20, exportselection=0, takefocus=0)
         self.timeOptionList.grid(row=2, column=0, rowspan=200, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=5)
         self.timeOptionList.insert(0, self.loadingMsg)
         self.timeOptionList.config(state=DISABLED)
@@ -119,25 +120,25 @@ class GUI:
         self.browserVal = IntVar(self.master)
         self.browserVal.set(self.userInfo["browser"])
         self.browser = Checkbutton(self.master, text="Show web browser", variable=self.browserVal,
-                                   command=self.browserShow, onvalue=1, offvalue=0, font=("Helvetica", 12))
+                                   command=self.browserShow, onvalue=1, offvalue=0, font=("Helvetica", 12), takefocus=0)
         self.browser.grid(row=4, column=2, sticky=W)
 
         # override checkbox
         self.overrideVal = IntVar(self.master)
         self.overrideVal.set(self.userInfo["override"])
         self.override = Checkbutton(self.master, text="Override 2hr max", variable=self.overrideVal,
-                                    onvalue=1, offvalue=0, font=("Helvetica", 12))
+                                    onvalue=1, offvalue=0, font=("Helvetica", 12), takefocus=0)
         self.override.grid(row=5, column=2, sticky=W)
 
         # confirm checkbox
         self.confirmVal = IntVar(self.master)
         self.confirmVal.set(self.userInfo["confirm"])
         self.confirm = Checkbutton(self.master, text="Enable confirm dialog", variable=self.confirmVal,
-                                   onvalue=1, offvalue=0, font=("Helvetica", 12))
+                                   onvalue=1, offvalue=0, font=("Helvetica", 12), takefocus=0)
         self.confirm.grid(row=6, column=2, sticky=W)
 
         # submit button
-        self.submit = Button(self.master, text="Submit", command=self.submit_click)
+        self.submit = Button(self.master, text="Submit", command=self.submit_click, takefocus=0)
         self.submit.grid(row=8, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
         self.submit["state"] = "disabled"
 
@@ -414,8 +415,6 @@ class GUI:
             self.timeOptionList.insert(END, "No times available")
             self.timeOptionList.config(state=DISABLED)
 
-
-
         # update height, update the whole list if it isnt first run
         self.timeOptionList.configure(height=len(self.roomTimeList[self.roomIndex]))
 
@@ -431,7 +430,7 @@ class GUI:
         self.master.update()
 
 
-    def submit_click(self):
+    def submit_click(self, value=""):
         if self.emailEntry.get().strip()[-13:] != "@lakeheadu.ca":
             tkMessageBox.showerror("Email format error", "Please make sure to use a valid @lakeheadu.ca email address")
             return
