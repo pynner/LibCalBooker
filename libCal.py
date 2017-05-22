@@ -7,6 +7,7 @@ import string
 import time
 import tkMessageBox
 from Tkinter import *
+from ttk import Progressbar
 
 sys.path.append(os.getcwd() + '/bin')
 from selenium import webdriver
@@ -137,9 +138,17 @@ class GUI:
         # submit button
         self.submit = Button(self.master, text="Submit", command=self.submit_click)
         self.submit.grid(row=8, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
+        self.submit["state"] = "disabled"
+
+        # loading bar
+        self.loadingBar = Progressbar(self.master, orient=HORIZONTAL, length=100, mode='determinate')
+        self.loadingBar.grid(row=9, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
+        self.loadingBar["value"] = 10
 
         # update skeleton GUI, then load data
         self.master.update()
+
+        # load data in new thread
         self.load_data()
 
         # make sure window on top
@@ -199,6 +208,9 @@ class GUI:
 
 
     def load_data(self):
+        self.loadingBar["value"] = 25
+        self.master.update_idletasks()
+
         # connect to webdriver - Try Google Chrome, then Firefox
         chrome = False
         try:
@@ -266,6 +278,11 @@ class GUI:
 
         # hide window/throw in corner or show
         self.browserShow()
+        self.master.lift()
+
+        self.loadingBar["value"] = 50
+        self.master.update_idletasks()
+
 
         # load intial site
         self.driver.get("http://libcal.lakeheadu.ca/rooms_acc.php?gid=13445")
@@ -276,6 +293,9 @@ class GUI:
         dateWheel = Select(self.driver.find_element_by_id("datei"))
         for date in dateWheel.options:
             self.tupleDates[date.text] = date.get_attribute("value")
+
+        self.loadingBar["value"] = 75
+        self.master.update_idletasks()
 
         # remove loading option, pull dates from tuple to list
         # set chosen date to top entry in date list
@@ -311,9 +331,15 @@ class GUI:
                 return
             else:
                 self.chosenDate.set(value)
+                self.loadingBar["value"] = 20
+                self.submit["state"] = "disabled"
+                self.master.update_idletasks()
+
         # clear timeOptionList contents, showing loading message
         self.timeOptionList.delete(0, END)
         self.timeOptionList.insert(0, self.loadingMsg)
+        if value:
+            self.loadingBar["value"] = 40
         self.master.update()
 
         # load selected date webpage
@@ -327,19 +353,37 @@ class GUI:
         # create 2D array of [0]'s
         self.roomTimeList = [[0] for _ in range(16)]
 
-        self.room_click()
+        if value:
+            self.loadingBar["value"] = 60
+            self.master.update_idletasks()
+        self.room_click("room")
 
     def room_click(self, value=""):
+        if value == "room":
+            self.loadingBar["value"] = 95
+        else:
+            self.loadingBar["value"] = 30
+            self.submit["state"] = "disabled"
+            self.master.update_idletasks()
         # set roomIndex to new room
         self.roomIndex = self.availRooms.index(self.chosenRoom.get())
 
         # clear timeOptionList contents, showing loading message
         self.timeOptionList.delete(0, END)
         self.timeOptionList.insert(0, self.loadingMsg)
+        if value != "room":
+            self.loadingBar["value"] = 40
         self.master.update()
 
         form = self.driver.find_element_by_id("roombookingform")
+        if value != "room":
+            self.loadingBar["value"] = 60
+            self.master.update_idletasks()
         rooms = form.find_elements_by_tag_name("fieldset")
+        if value != "room":
+            self.loadingBar["value"] = 80
+            self.master.update_idletasks()
+
 
         # don't scrape again if already loaded
         if self.roomTimeList[self.roomIndex] == [0]:
@@ -369,12 +413,15 @@ class GUI:
         for i in range(0, len(self.roomTimeList[self.roomIndex]), 2):
             self.timeOptionList.itemconfigure(i, background='#f0f0ff')
 
-        # update GUI size
+        self.loadingBar["value"] = 100
+        self.master.update_idletasks()
+
+        # update GUI size and remove loading bar
+        self.submit["state"] = "normal"
         self.master.update()
 
 
     def submit_click(self):
-        print self.timeOptionList.selection_includes(0)
         if self.emailEntry.get().strip()[-13:] != "@lakeheadu.ca":
             tkMessageBox.showerror("Email format error", "Please make sure to use a valid @lakeheadu.ca email address")
             return
@@ -434,7 +481,6 @@ class GUI:
         except:
             print "Could not load the browser"
         assert "The Chancellor Paterson Library" in self.driver.title
-        print self.outputTimeArray
 
         outputText = "Successfully booked the following rooms \n" + self.chosenDate.get() + "\n" + '-' * (
         len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
