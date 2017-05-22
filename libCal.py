@@ -84,6 +84,7 @@ class GUI:
         self.timeOptionList = Listbox(self.master, selectmode=EXTENDED, height=20, exportselection=0)
         self.timeOptionList.grid(row=2, column=0, rowspan=200, columnspan=1, sticky=(N, S, E, W), padx=(5, 0), pady=5)
         self.timeOptionList.insert(0, self.loadingMsg)
+        self.timeOptionList.config(state=DISABLED)
 
         #################-BUTTONS-##########################
         # SIDE INFO
@@ -338,6 +339,7 @@ class GUI:
         # clear timeOptionList contents, showing loading message
         self.timeOptionList.delete(0, END)
         self.timeOptionList.insert(0, self.loadingMsg)
+        self.timeOptionList.config(state=DISABLED)
         if value:
             self.loadingBar["value"] = 40
         self.master.update()
@@ -371,6 +373,7 @@ class GUI:
         # clear timeOptionList contents, showing loading message
         self.timeOptionList.delete(0, END)
         self.timeOptionList.insert(0, self.loadingMsg)
+        self.timeOptionList.config(state=DISABLED)
         if value != "room":
             self.loadingBar["value"] = 40
         self.master.update()
@@ -402,9 +405,16 @@ class GUI:
                 break
 
         # for the selected room, set time slots
+        self.timeOptionList.config(state=NORMAL)
         self.timeOptionList.delete(0, END)
-        for timeSlot in self.roomTimeList[self.roomIndex]:
-            self.timeOptionList.insert(END, self.availTimes[timeSlot])
+        if len(self.roomTimeList[self.roomIndex]) > 0:
+            for timeSlot in self.roomTimeList[self.roomIndex]:
+                self.timeOptionList.insert(END, self.availTimes[timeSlot])
+        else:
+            self.timeOptionList.insert(END, "No times available")
+            self.timeOptionList.config(state=DISABLED)
+
+
 
         # update height, update the whole list if it isnt first run
         self.timeOptionList.configure(height=len(self.roomTimeList[self.roomIndex]))
