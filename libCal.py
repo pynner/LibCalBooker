@@ -15,6 +15,27 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 
+import httplib2
+import os
+import re
+
+from apiclient import discovery
+from oauth2client import client
+from oauth2client import tools
+from oauth2client.file import Storage
+
+try:
+    import argparse
+    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+except ImportError:
+    flags = None
+
+# If modifying these scopes, delete your previously saved credentials
+# at ~/.credentials/gmail-python-quickstart.json
+SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
+CLIENT_SECRET_FILE = 'client_secret.json'
+APPLICATION_NAME = 'LibCalBooker'
+
 
 class GUI:
     def __init__(self, master):
@@ -146,6 +167,14 @@ class GUI:
         self.loadingBar.grid(row=9, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
         self.loadingBar["value"] = 10
 
+        #open new tab
+        self.newTab = Button(self.master, text="newTab", command=self.tab_click, takefocus=0)
+        self.newTab.grid(row=10, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
+
+        # email 1
+        self.emm = Button(self.master, text="email tester", command=self.email_click, takefocus=0)
+        self.emm.grid(row=11, column=2, sticky=(N, S, E, W), padx=(0, 5), pady=(0, 5))
+
         # update skeleton GUI, then load data
         self.master.update()
         self.load_data()
@@ -157,6 +186,92 @@ class GUI:
         if self.userInfo["firstLoad"]:
             tkMessageBox.showinfo("Welcome",
                                   "Currently, booking multiple rooms is not permitted. You are limited to only booking one room per session. However, booking multiple time slots per room is permitted.\n\nMake sure to update the User Info section with your own name and email. Once you submit rooms to be booked, you must check your lakeheadu email and confirm the rooms.\n\nCreated by Mitchell Pynn ")
+
+    def tab_click(self):
+        # for email ids, get email and link
+        # open new
+
+        # get url from gmail then...
+        #idArray = ['78765369|78765370|78765371|78765372&c=02b3cf9337', '78765382|78765383|78765384|78765385&c=a9aaea9e44', '78765388|78765389|78765390|78765391&c=84f7c71fff', '78765392|78765393|78765394|78765395&c=87f6f10690']
+        idArray = ['654654754', '5435765765']
+
+        for idItem in idArray:
+            self.driver.execute_script(
+                "window.open('http://libcal.lakeheadu.ca/confirm.php?i=" + idItem + "&m=confirm', 'new_window')")
+            self.driver.switch_to.window(self.driver.window_handles[1])
+            try:
+                # wait until page is loaded and success element found
+                element = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "final_msg"))
+                )
+
+                # close tab and return to main page
+                self.driver.close()
+                self.driver.switch_to.window(self.driver.window_handles[0])
+
+            except:
+                print "Could not book room " + idItem
+
+    def email_click(self):
+        print "clicked email"
+
+        """Shows basic usage of the Gmail API.
+
+            Creates a Gmail API service object and outputs a list of label names
+            of the user's Gmail account.
+            """
+        credentials = self.get_credentials()
+        http = credentials.authorize(httplib2.Http())
+        service = discovery.build('gmail', 'v1', http=http)
+
+        idArray = ['AIDSBOLA']
+
+        print "starting"
+
+        for idItem in idArray:
+            try:
+                msg1 = service.users().messages().list(userId='me',
+                                                       q='newer_than:1d to:' + idItem).execute()
+                output = msg1['messages']
+                print(output[0]['id'])
+
+                text = service.users().messages().get(userId='me', id=output[0]['id']).execute()
+                ampFix = text['snippet'].replace('&amp;', '&')
+                confirmUrl = \
+                re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+|]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', ampFix)[
+                    0] + '&m=confiRRRR'
+                print(confirmUrl)
+
+            except:
+                print('An error occurred: ????')
+
+    def get_credentials(self):
+        """Gets valid user credentials from storage.
+
+        If nothing has been stored, or if the stored credentials are invalid,
+        the OAuth2 flow is completed to obtain the new credentials.
+
+        Returns:
+            Credentials, the obtained credential.
+        """
+        home_dir = os.path.expanduser('~')
+        credential_dir = os.path.join(home_dir, '.credentials')
+        if not os.path.exists(credential_dir):
+            os.makedirs(credential_dir)
+        credential_path = os.path.join(credential_dir,
+                                       'ass1m.json')
+
+        store = Storage(credential_path)
+        credentials = store.get()
+        if not credentials or credentials.invalid:
+            flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
+            flow.user_agent = APPLICATION_NAME
+            if flags:
+                credentials = tools.run_flow(flow, store, flags)
+            else:  # Needed only for compatibility with Python 2.6
+                credentials = tools.run(flow, store)
+            print('Storing credentials to ' + credential_path)
+        return credentials
 
     def browser_show(self):
         if self.browserVal.get() == 1:
@@ -469,6 +584,7 @@ class GUI:
         outputText = "Successfully booked the following rooms \n" + self.chosenDate.get() + "\n" + '-' * (
             len(self.chosenDate.get()) + 2) + "\n" + self.chosenRoom.get()
         outputLength = 0
+        outputRandomId = []
         while True:
             # get rooms
             form = self.driver.find_element_by_id("roombookingform")
@@ -529,8 +645,10 @@ class GUI:
 
                 # always uses random_id, override 2hrs just prevents user from booking more
                 # then 2hrs at a time
+                randId = self.id_generator()
+                outputRandomId.append(randId)
                 self.driver.find_element_by_id("email").send_keys(
-                    self.emailEntry.get().strip()[:-13] + "+" + self.id_generator() + "@lakeheadu.ca")
+                    self.emailEntry.get().strip()[:-13] + "+" + randId + "@lakeheadu.ca")
 
                 # submit
                 self.driver.find_element_by_id("s-lc-rm-ac-but").click()
@@ -556,6 +674,7 @@ class GUI:
 
         # print success message
         if len(self.outputTimeArray) <= 0:
+            print outputRandomId
             tkMessageBox.showinfo("Success", outputText)
 
     # random ID generator -> http://stackoverflow.com/a/2257449
